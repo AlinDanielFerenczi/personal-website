@@ -1,6 +1,8 @@
 const COLORS = ['#e12afb', '#00d1ff', '#2b7fff', '#00c951']
-const CYCLE = 12000
+const CYCLE = 15100
 const ease = (value) => value * value * (3 - 2 * value)
+const converge = (value) => value ** 3
+const burst = (value) => value === 1 ? 1 : 1 - 2 ** (-10 * value)
 const hash = (value) => Math.abs(Math.sin(value * 12.9898) * 43758.5453) % 1
 const mix = (from, to, amount) => from + (to - from) * amount
 
@@ -9,8 +11,28 @@ export function getDataPhase(elapsed) {
   if (time < 2400) return { name: 'cluster', amount: 0 }
   if (time < 5000) return { name: 'forming', amount: ease((time - 2400) / 2600) }
   if (time < 7200) return { name: 'structure', amount: 1 }
-  if (time < 8500) return { name: 'explode', amount: ease((time - 7200) / 1300) }
-  return { name: 'reset', amount: ease((time - 8500) / 3500) }
+  if (time < 9700) return { name: 'collapse', amount: converge((time - 7200) / 2500) }
+  if (time < 10700) return { name: 'singularity', amount: 1 }
+  if (time < 11600) return { name: 'explode', amount: burst((time - 10700) / 900) }
+  return { name: 'reset', amount: ease((time - 11600) / 3500) }
+}
+
+export function getFunnelPoint(index) {
+  const progress = Math.floor(index / 8) / 9
+  const spread = 0.38 * (1 - progress) ** 1.6
+  return {
+    x: 0.55 + (hash(index + 29) - 0.5) * spread,
+    y: 0.16 + progress * 0.34,
+    progress,
+  }
+}
+
+export function getTrunkPoint(index) {
+  const progress = (index - 80) / 31
+  return {
+    x: 0.7 + Math.sin(progress * Math.PI) * 0.055,
+    y: 0.74 - progress * 0.24,
+  }
 }
 
 function createParticles(count = 280) {
@@ -22,13 +44,13 @@ function createParticles(count = 280) {
     let targetY
 
     if (index < 80) {
-      const progress = index / 79
-      targetX = 0.4 + progress * 0.25
-      targetY = 0.5 + (hash(index + 29) - 0.5) * 0.52 * (1 - progress)
+      const funnel = getFunnelPoint(index)
+      targetX = funnel.x
+      targetY = funnel.y
     } else if (index < 112) {
-      const progress = (index - 80) / 31
-      targetX = 0.65 + progress * 0.08
-      targetY = 0.72 - progress * 0.22
+      const trunk = getTrunkPoint(index)
+      targetX = trunk.x
+      targetY = trunk.y
     } else {
       const branch = (index - 112) % 6
       const progress = Math.floor((index - 112) / 6) / 27
@@ -64,7 +86,9 @@ function positionParticle(particle, phase, elapsed) {
   if (phase.name === 'cluster') return [clusterX, clusterY]
   if (phase.name === 'forming') return [mix(clusterX, particle.targetX, phase.amount), mix(clusterY, particle.targetY, phase.amount)]
   if (phase.name === 'structure') return [particle.targetX, particle.targetY]
-  if (phase.name === 'explode') return [mix(particle.targetX, particle.explodeX, phase.amount), mix(particle.targetY, particle.explodeY, phase.amount)]
+  if (phase.name === 'collapse') return [mix(particle.targetX, 0.72, phase.amount), mix(particle.targetY, 0.5, phase.amount)]
+  if (phase.name === 'singularity') return [0.72, 0.5]
+  if (phase.name === 'explode') return [mix(0.72, particle.explodeX, phase.amount), mix(0.5, particle.explodeY, phase.amount)]
   return [mix(particle.explodeX, clusterX, phase.amount), mix(particle.explodeY, clusterY, phase.amount)]
 }
 
@@ -87,9 +111,9 @@ function drawStructure(context, width, height, strength) {
     points.slice(1).forEach(([x, y]) => context.lineTo(x * width, y * height))
     context.stroke()
   }
-  path([[.39, .22], [.48, .31], [.57, .42], [.65, .5]])
-  path([[.39, .78], [.48, .69], [.57, .58], [.65, .5]])
-  path([[.65, .71], [.67, .61], [.7, .5], [.77, .43]])
+  path([[.36, .16], [.455, .28], [.527, .41], [.55, .5]])
+  path([[.74, .16], [.645, .28], [.573, .41], [.55, .5]])
+  path([[.55, .5], [.62, .5], [.7, .5]])
   ;[[.89, .17], [.96, .29], [.91, .42], [.95, .57], [.9, .7], [.84, .82]].forEach((end, index) => {
     path([[.7, .5], [.76, .47 + (index - 2.5) * .015], end])
   })
@@ -119,7 +143,7 @@ export function initHeroDataScene(canvas, animate = true) {
     if (!width || !height) return
     const phase = getDataPhase(elapsed)
     const positions = particles.map((particle) => positionParticle(particle, phase, elapsed))
-    const structureStrength = phase.name === 'forming' ? phase.amount : phase.name === 'structure' ? 1 : phase.name === 'explode' ? 1 - phase.amount : 0
+    const structureStrength = phase.name === 'forming' ? phase.amount : phase.name === 'structure' ? 1 : phase.name === 'collapse' ? 1 - phase.amount : 0
 
     context.clearRect(0, 0, width, height)
     context.save()
