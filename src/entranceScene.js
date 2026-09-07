@@ -42,6 +42,16 @@ function makeCeramicTexture() {
   pearl.addColorStop(1, 'rgba(0,209,255,.11)')
   context.fillStyle = pearl
   context.fillRect(0, 0, 1024, 1024)
+  context.lineCap = 'round'
+  for (let line = 0; line < 72; line += 1) {
+    const y = line * 15 + Math.sin(line * 1.7) * 8
+    context.strokeStyle = `rgba(255,255,255,${0.14 + (line % 4) * 0.035})`
+    context.lineWidth = 0.7 + (line % 3) * 0.45
+    context.beginPath()
+    context.moveTo(-40, y)
+    context.bezierCurveTo(260, y - 18, 720, y + 22, 1064, y - 4)
+    context.stroke()
+  }
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   return texture
@@ -83,6 +93,9 @@ export function initEntrance(container, canvas, header, reducedMotion = false) {
   const panel = new THREE.MeshPhysicalMaterial({
     map: ceramicTexture,
     color: 0xffffff,
+    transparent: true,
+    opacity: 0.94,
+    depthWrite: false,
     metalness: 0.04,
     roughness: 0.24,
     clearcoat: 0.9,
@@ -102,7 +115,7 @@ export function initEntrance(container, canvas, header, reducedMotion = false) {
     door.userData.horizontalBars = []
     door.userData.verticalBars = []
 
-    for (const y of [-0.985, -0.5, 0, 0.5, 0.985]) {
+    for (const y of [-0.985, -0.33, 0.33, 0.985]) {
       const thickness = Math.abs(y) > 0.9 ? 0.035 : 0.022
       const bar = new THREE.Mesh(new RoundedBoxGeometry(1, thickness, 0.06, 3, Math.min(0.008, thickness / 3)), trim)
       bar.position.set(0, y, 0.073)
