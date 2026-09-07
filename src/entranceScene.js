@@ -5,27 +5,6 @@ const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value))
 const range = (value, start, end) => clamp((value - start) / (end - start))
 const ease = (value) => value * value * (3 - 2 * value)
 
-function makePaperTexture() {
-  const canvas = document.createElement('canvas')
-  canvas.width = canvas.height = 512
-  const context = canvas.getContext('2d')
-  context.fillStyle = '#ffffff'
-  context.fillRect(0, 0, 512, 512)
-  context.lineWidth = 0.6
-  for (let index = 0; index < 700; index += 1) {
-    const x = (index * 97) % 512
-    const y = (index * 223) % 512
-    context.strokeStyle = `rgba(36,32,28,${0.018 + (index % 5) * 0.004})`
-    context.beginPath()
-    context.moveTo(x, y)
-    context.lineTo(x + 8 + (index % 17), y + (index % 3) - 1)
-    context.stroke()
-  }
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.colorSpace = THREE.SRGBColorSpace
-  return texture
-}
-
 function makeMetalTexture() {
   const canvas = document.createElement('canvas')
   canvas.width = 512
@@ -71,10 +50,24 @@ export function initEntrance(container, canvas, header, reducedMotion = false) {
   const rimLight = new THREE.DirectionalLight(0xffffff, 1.2)
   rimLight.position.set(3, -1, 2)
   scene.add(rimLight)
+  const magentaGlow = new THREE.PointLight(0xe12afb, 5, 8)
+  magentaGlow.position.set(-2.5, 1.2, 2.5)
+  scene.add(magentaGlow)
+  const cyanGlow = new THREE.PointLight(0x00d1ff, 5, 8)
+  cyanGlow.position.set(2.5, -1.2, 2.5)
+  scene.add(cyanGlow)
 
-  const paperTexture = makePaperTexture()
   const metalTexture = makeMetalTexture()
-  const panel = new THREE.MeshBasicMaterial({ map: paperTexture, color: 0xffffff, toneMapped: false })
+  const panel = new THREE.MeshPhysicalMaterial({
+    color: 0x151722,
+    transparent: true,
+    opacity: 0.82,
+    metalness: 0.28,
+    roughness: 0.2,
+    clearcoat: 1,
+    clearcoatRoughness: 0.16,
+    depthWrite: false,
+  })
   const trim = new THREE.MeshStandardMaterial({ map: metalTexture, color: 0xffffff, metalness: 0.98, roughness: 0.2 })
   const doors = []
 
@@ -169,7 +162,6 @@ export function initEntrance(container, canvas, header, reducedMotion = false) {
     document.documentElement.classList.remove('entrance-active')
     scene.traverse((object) => object.geometry?.dispose())
     ;[panel, trim].forEach((material) => material.dispose())
-    paperTexture.dispose()
     metalTexture.dispose()
     renderer.dispose()
     header.removeAttribute('style')
