@@ -26,6 +26,28 @@ function makeMetalTexture() {
   return texture
 }
 
+function makeTitaniumTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 1024
+  const context = canvas.getContext('2d')
+  const gradient = context.createLinearGradient(0, 0, 1024, 0)
+  gradient.addColorStop(0, '#294f7e')
+  gradient.addColorStop(0.2, '#37699f')
+  gradient.addColorStop(0.5, '#6389bc')
+  gradient.addColorStop(0.78, '#37699f')
+  gradient.addColorStop(1, '#294f7e')
+  context.fillStyle = gradient
+  context.fillRect(0, 0, 1024, 1024)
+  for (let x = 0; x < 1024; x += 2) {
+    const alpha = 0.025 + (x % 9) * 0.004
+    context.fillStyle = `rgba(255,255,255,${alpha})`
+    context.fillRect(x, 0, 1, 1024)
+  }
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+}
+
 export function initEntrance(container, canvas, header, reducedMotion = false) {
   if (reducedMotion) {
     container.classList.add('entrance-complete')
@@ -50,23 +72,20 @@ export function initEntrance(container, canvas, header, reducedMotion = false) {
   const rimLight = new THREE.DirectionalLight(0xffffff, 1.2)
   rimLight.position.set(3, -1, 2)
   scene.add(rimLight)
-  const magentaGlow = new THREE.PointLight(0xe12afb, 5, 8)
+  const magentaGlow = new THREE.PointLight(0xe12afb, 2.2, 8)
   magentaGlow.position.set(-2.5, 1.2, 2.5)
   scene.add(magentaGlow)
-  const cyanGlow = new THREE.PointLight(0x00d1ff, 5, 8)
+  const cyanGlow = new THREE.PointLight(0x00d1ff, 2.2, 8)
   cyanGlow.position.set(2.5, -1.2, 2.5)
   scene.add(cyanGlow)
 
   const metalTexture = makeMetalTexture()
-  const panel = new THREE.MeshPhysicalMaterial({
-    color: 0x151722,
-    transparent: true,
-    opacity: 0.82,
-    metalness: 0.28,
-    roughness: 0.2,
-    clearcoat: 1,
-    clearcoatRoughness: 0.16,
-    depthWrite: false,
+  const titaniumTexture = makeTitaniumTexture()
+  const panel = new THREE.MeshStandardMaterial({
+    map: titaniumTexture,
+    color: 0xffffff,
+    metalness: 0.78,
+    roughness: 0.4,
   })
   const trim = new THREE.MeshStandardMaterial({ map: metalTexture, color: 0xffffff, metalness: 0.98, roughness: 0.2 })
   const doors = []
@@ -163,6 +182,7 @@ export function initEntrance(container, canvas, header, reducedMotion = false) {
     scene.traverse((object) => object.geometry?.dispose())
     ;[panel, trim].forEach((material) => material.dispose())
     metalTexture.dispose()
+    titaniumTexture.dispose()
     renderer.dispose()
     header.removeAttribute('style')
   }
