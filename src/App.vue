@@ -74,12 +74,12 @@ const services = [
   {
     number: '01',
     title: 'Find the hack for you',
-    copy: 'I audit your business, brand, product, customer journey, and numbers to find what are the channels that would work for you.',
+    copy: 'I audit your business, brand, product, customer journey, and numbers to find what are the channels that work for you.',
   },
   {
     number: '02',
     title: 'Build the growth engine',
-    copy: 'I turn strategy into an operating system: acquisition, content, conversion, CRM, automation, and measurement working together.',
+    copy: 'I turn strategy into an operating system: acquisition, content, conversion, CRM, automation, and business intelligence working together.',
   },
   {
     number: '03',
@@ -209,7 +209,7 @@ onBeforeUnmount(() => {
           <div class="proof-header">
             <div class="section-label"><span>02</span> Portfolio</div>
             <div class="section-heading">
-              <h2 id="proof-title">I walk that <em>talk.</em></h2>
+              <h2 id="proof-title">I walk the <em>talk.</em></h2>
               <p>Four projects. One outcome at a time.</p>
             </div>
           </div>
