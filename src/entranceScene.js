@@ -26,23 +26,22 @@ function makeMetalTexture() {
   return texture
 }
 
-function makeTitaniumTexture() {
+function makeCeramicTexture() {
   const canvas = document.createElement('canvas')
   canvas.width = canvas.height = 1024
   const context = canvas.getContext('2d')
-  const gradient = context.createLinearGradient(0, 0, 1024, 0)
-  gradient.addColorStop(0, '#294f7e')
-  gradient.addColorStop(0.2, '#37699f')
-  gradient.addColorStop(0.5, '#6389bc')
-  gradient.addColorStop(0.78, '#37699f')
-  gradient.addColorStop(1, '#294f7e')
-  context.fillStyle = gradient
+  const base = context.createLinearGradient(0, 0, 1024, 1024)
+  base.addColorStop(0, '#e7e5e3')
+  base.addColorStop(0.45, '#ffffff')
+  base.addColorStop(1, '#dfe5e8')
+  context.fillStyle = base
   context.fillRect(0, 0, 1024, 1024)
-  for (let x = 0; x < 1024; x += 2) {
-    const alpha = 0.025 + (x % 9) * 0.004
-    context.fillStyle = `rgba(255,255,255,${alpha})`
-    context.fillRect(x, 0, 1, 1024)
-  }
+  const pearl = context.createRadialGradient(260, 220, 20, 260, 220, 760)
+  pearl.addColorStop(0, 'rgba(225,42,251,.13)')
+  pearl.addColorStop(0.48, 'rgba(255,255,255,0)')
+  pearl.addColorStop(1, 'rgba(0,209,255,.11)')
+  context.fillStyle = pearl
+  context.fillRect(0, 0, 1024, 1024)
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   return texture
@@ -80,12 +79,17 @@ export function initEntrance(container, canvas, header, reducedMotion = false) {
   scene.add(cyanGlow)
 
   const metalTexture = makeMetalTexture()
-  const titaniumTexture = makeTitaniumTexture()
-  const panel = new THREE.MeshStandardMaterial({
-    map: titaniumTexture,
+  const ceramicTexture = makeCeramicTexture()
+  const panel = new THREE.MeshPhysicalMaterial({
+    map: ceramicTexture,
     color: 0xffffff,
-    metalness: 0.78,
-    roughness: 0.4,
+    metalness: 0.04,
+    roughness: 0.24,
+    clearcoat: 0.9,
+    clearcoatRoughness: 0.18,
+    iridescence: 0.42,
+    iridescenceIOR: 1.3,
+    iridescenceThicknessRange: [100, 360],
   })
   const trim = new THREE.MeshStandardMaterial({ map: metalTexture, color: 0xffffff, metalness: 0.98, roughness: 0.2 })
   const doors = []
@@ -182,7 +186,7 @@ export function initEntrance(container, canvas, header, reducedMotion = false) {
     scene.traverse((object) => object.geometry?.dispose())
     ;[panel, trim].forEach((material) => material.dispose())
     metalTexture.dispose()
-    titaniumTexture.dispose()
+    ceramicTexture.dispose()
     renderer.dispose()
     header.removeAttribute('style')
   }
