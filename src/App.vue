@@ -5,6 +5,8 @@ const cursorEl = ref(null)
 const entranceEl = ref(null)
 const entranceCanvas = ref(null)
 const headerEl = ref(null)
+const heroDataCanvas = ref(null)
+let cleanupHeroData
 let cleanupEntrance
 let cleanupCursor
 const proofCanvas = ref(null)
@@ -105,6 +107,10 @@ onMounted(async () => {
     const { initEntrance } = await import('./entranceScene')
     cleanupEntrance = initEntrance(entranceEl.value, entranceCanvas.value, headerEl.value, reducedMotion || window.matchMedia('(max-width: 760px)').matches)
   }
+  if (heroDataCanvas.value) {
+    const { initHeroDataScene } = await import('./heroDataScene')
+    cleanupHeroData = initHeroDataScene(heroDataCanvas.value, !reducedMotion)
+  }
   if (!reducedMotion) {
     const { initSmoothScroll } = await import('./smoothScroll')
     cleanupSmoothScroll = initSmoothScroll()
@@ -129,6 +135,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   cleanupEntrance?.()
+  cleanupHeroData?.()
   cleanupCursor?.()
   cleanupProofScene?.()
   cleanupRoleScene?.()
@@ -166,14 +173,14 @@ onBeforeUnmount(() => {
       <div ref="entranceEl" class="entrance">
         <div class="entrance-sticky">
           <section id="top" class="hero hero-light" aria-labelledby="hero-title">
-            <canvas class="hero-canvas" aria-hidden="true"></canvas>
+            <canvas ref="heroDataCanvas" class="hero-data-flow" aria-hidden="true"></canvas>
         <div class="hero-content reveal">
           <h1 id="hero-title">
-            <span class="hero-line-primary">Strategy</span>
-            <span class="hero-line-accent">to revenue.</span>
+            <span class="hero-line-primary" data-text="Strategy">Strategy</span>
+            <span class="hero-line-accent" data-text="to revenue.">to revenue.</span>
           </h1>
           <div class="hero-intro-grid reveal delay-one">
-            <p class="hero-lead">I build personalized growth engines to turn strategy itno revenue.</p>
+            <p class="hero-lead">I build personalized growth engines to turn strategy into revenue.</p>
             <p>Fractional Head of Growth for founder-led companies. I don't do marketing. I connect acquisition, content, automation, reporting, and customer success into one repeatable engine.</p>
           </div>
           <div class="hero-principles reveal delay-two" aria-label="Working principles">
