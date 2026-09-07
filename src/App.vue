@@ -2,6 +2,10 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const cursorEl = ref(null)
+const entranceEl = ref(null)
+const entranceCanvas = ref(null)
+const headerEl = ref(null)
+let cleanupEntrance
 let cleanupCursor
 const proofCanvas = ref(null)
 let cleanupProofScene
@@ -97,6 +101,10 @@ onMounted(async () => {
   serviceSteps.value.forEach((step) => serviceObserver.observe(step))
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (entranceEl.value && entranceCanvas.value && headerEl.value) {
+    const { initEntrance } = await import('./entranceScene')
+    cleanupEntrance = initEntrance(entranceEl.value, entranceCanvas.value, headerEl.value, reducedMotion || window.matchMedia('(max-width: 760px)').matches)
+  }
   if (!reducedMotion) {
     const { initSmoothScroll } = await import('./smoothScroll')
     cleanupSmoothScroll = initSmoothScroll()
@@ -120,6 +128,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  cleanupEntrance?.()
   cleanupCursor?.()
   cleanupProofScene?.()
   cleanupRoleScene?.()
@@ -138,7 +147,7 @@ onBeforeUnmount(() => {
     </div>
     <a class="skip-link" href="#main">Skip to content</a>
 
-    <header class="site-header">
+    <header ref="headerEl" class="site-header">
       <a class="header-brand" href="#top" aria-label="Alan (Alin) D. Ferenczi, home">
         <strong>Alan (Alin) Ferenczi</strong>
       </a>
@@ -154,8 +163,10 @@ onBeforeUnmount(() => {
     </header>
 
     <main id="main">
-      <section id="top" class="hero hero-light" aria-labelledby="hero-title">
-        <canvas class="hero-canvas" aria-hidden="true"></canvas>
+      <div ref="entranceEl" class="entrance">
+        <div class="entrance-sticky">
+          <section id="top" class="hero hero-light" aria-labelledby="hero-title">
+            <canvas class="hero-canvas" aria-hidden="true"></canvas>
         <div class="hero-content reveal">
           <h1 id="hero-title">
             <span class="hero-line-primary">Strategy</span>
@@ -172,13 +183,18 @@ onBeforeUnmount(() => {
             <div><span>Human in the loop</span><p>Souless products and content don't work. The secret sauce is your team.</p></div>
           </div>
         </div>
-        <a class="hero-scroll-button reveal delay-two" href="#proof">
+        <a class="hero-scroll-button reveal delay-two" href="#portfolio">
           <span>Scroll to explore</span>
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v13M5 11l5 5 5-5" /></svg>
         </a>
         <p class="scroll-note">Strategy · Systems · Execution</p>
-      </section>
-
+          </section>
+          <div class="entrance-gate" aria-hidden="true">
+            <canvas ref="entranceCanvas" class="entrance-canvas"></canvas>
+            <p class="entrance-prompt">Scroll to open</p>
+          </div>
+        </div>
+      </div>
 
       <section id="portfolio" ref="proofSection" class="proof-section dark-section" aria-labelledby="proof-title">
         <div class="proof-sticky">

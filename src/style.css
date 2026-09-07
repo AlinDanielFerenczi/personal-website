@@ -71,6 +71,67 @@ summary:focus-visible {
   overflow-x: clip;
 }
 
+.entrance {
+  position: relative;
+  height: 190svh;
+  background: var(--paper);
+}
+
+.entrance-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.entrance .hero {
+  height: 100svh;
+}
+
+.entrance-gate {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  overflow: hidden;
+  background: transparent;
+  will-change: opacity;
+}
+
+.entrance-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.entrance-prompt {
+  position: absolute;
+  right: clamp(1.5rem, 4vw, 4rem);
+  bottom: clamp(1.5rem, 4vw, 3rem);
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  margin: 0;
+  color: var(--ink);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.entrance-prompt::after {
+  width: 2.5rem;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+
+.entrance-active .site-header {
+  animation: none;
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+
 html.has-cursor,
 html.has-cursor * {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M2 2 L2 18 L6.2 14 L9 20.5 L11.5 19.4 L8.7 13.3 L14.5 13.3 Z' fill='%23e12afb' stroke='%23ffffff' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 2 2, auto;
@@ -129,7 +190,7 @@ html.has-cursor select {
 }
 
 .site-header {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 50%;
   z-index: 20;
@@ -1563,6 +1624,10 @@ footer small { color: #ddd9ee; }
 }
 
 @media (max-width: 760px) {
+  .entrance { height: auto; }
+  .entrance-sticky { position: relative; height: auto; }
+  .entrance-gate { display: none; }
+
   .proof-header .section-heading {
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -1709,6 +1774,10 @@ footer small { color: #ddd9ee; }
   html {
     scroll-behavior: auto;
   }
+  .entrance { height: auto; }
+  .entrance-sticky { position: relative; height: auto; }
+  .entrance-gate { display: none; }
+
 
   *,
   *::before,
