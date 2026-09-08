@@ -335,7 +335,7 @@ html.has-cursor select {
 }
 
 .hero h1:hover span::after {
-  animation: headline-shine 900ms cubic-bezier(.2, .7, .2, 1);
+  animation: headline-shine 1800ms cubic-bezier(.2, .7, .2, 1);
 }
 
 @keyframes headline-shine {
