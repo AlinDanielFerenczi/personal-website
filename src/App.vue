@@ -107,7 +107,7 @@ onMounted(async () => {
     }
   }
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (heroDataCanvas.value && introEl.value && headerEl.value) {
+  if (heroDataCanvas.value && introEl.value && headerEl.value && !window.matchMedia('(max-width: 760px)').matches) {
     const { initHeroDataScene } = await import('./heroDataScene')
     const journeySections = [...document.querySelectorAll('[data-journey-scene]')]
     cleanupHeroData = initHeroDataScene(heroDataCanvas.value, headerEl.value, journeySections, { animate: !reducedMotion })

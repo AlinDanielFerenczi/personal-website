@@ -1602,7 +1602,7 @@ footer small { color: #332b5f; }
     min-height: 100svh;
     padding-top: 7rem;
   }
-  .growth-journey-canvas { opacity: .8; }
+  .growth-journey-canvas { display: none; }
 
   .proof-header .section-heading {
     grid-template-columns: 1fr;

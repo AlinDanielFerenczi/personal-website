@@ -163,6 +163,12 @@ function drawGuides(context, scene, width, height, particles, alpha) {
     dot(context, width * (width >= 1100 ? .88 : .62), height * .5, 7, '#e12afb', alpha * .9)
   }
   if (scene === 3) {
+    for (let level = 0; level < 9; level += 1) {
+      const progress = level / 9
+      const spread = .38 * (1 - progress) ** 1.6
+      const y = (.16 + progress * .34) * height
+      line(context, [[(.55 - spread / 2) * width, y], [(.55 + spread / 2) * width, y]], COLORS[level % COLORS.length], alpha * .42, 1.25)
+    }
     for (let index = 0; index < particles.length; index += 12) {
       const particle = particles[index]
       line(context, [[.7 * width, .5 * height], [particle.targetX * width, particle.targetY * height]], particle.color, alpha * .2)
