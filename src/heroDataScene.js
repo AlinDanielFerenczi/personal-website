@@ -9,7 +9,7 @@ export function getJourneyState(scrollY, sectionTops, viewportHeight) {
   for (let scene = 0; scene < sectionTops.length - 1; scene += 1) {
     const boundary = sectionTops[scene + 1]
     const start = scene === 0 ? 0 : boundary - viewportHeight
-    const end = scene === 0 ? Math.max(1, boundary - viewportHeight) : boundary
+    const end = boundary
     if (scrollY < start) return { scene, next: scene, local: 0, transition: 0 }
     if (scrollY <= end) {
       const local = clamp((scrollY - start) / Math.max(1, end - start))
@@ -95,7 +95,7 @@ function line(context, points, color, alpha, width = 1) {
 
 function collapsedPosition(particle, index, elapsed) {
   const angle = particle.burstAngle + elapsed * .00008
-  const radius = .008 + hash(index + 19) * .026
+  const radius = .022 + hash(index + 19) * .06
   return [.62 + Math.cos(angle) * radius, .5 + Math.sin(angle) * radius]
 }
 
@@ -108,8 +108,8 @@ function explodedPosition(particle) {
 
 function leftClusterPosition(particle) {
   return [
-    .14 + (particle.startX - .2) * .62,
-    .5 + (particle.startY - .5) * .48,
+    .24 + (particle.startX - .2) * .95,
+    .5 + (particle.startY - .5) * .75,
   ]
 }
 

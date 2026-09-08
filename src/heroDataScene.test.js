@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict'
 import { getFunnelPoint, getJourneyState, getTrunkPoint } from './heroDataScene.js'
 
-const sectionTops = [0, 1800, 5000, 7000, 9000, 11000]
+const sectionTops = [0, 1000, 4000, 6000, 8000, 10000]
 const viewportHeight = 1000
 assert.deepEqual(getJourneyState(0, sectionTops, viewportHeight), { scene: 0, next: 1, local: 0, transition: 0 })
 assert.equal(getJourneyState(400, sectionTops, viewportHeight).scene, 0)
 assert.ok(getJourneyState(400, sectionTops, viewportHeight).transition > 0)
-assert.equal(getJourneyState(801, sectionTops, viewportHeight).scene, 1)
+assert.equal(getJourneyState(1001, sectionTops, viewportHeight).scene, 1)
 assert.equal(getJourneyState(3000, sectionTops, viewportHeight).transition, 0)
-assert.equal(getJourneyState(4500, sectionTops, viewportHeight).next, 2)
+assert.equal(getJourneyState(3500, sectionTops, viewportHeight).next, 2)
 assert.equal(getJourneyState(5001, sectionTops, viewportHeight).scene, 2)
 assert.deepEqual(getJourneyState(12000, sectionTops, viewportHeight), { scene: 5, next: 5, local: 0, transition: 0 })
 

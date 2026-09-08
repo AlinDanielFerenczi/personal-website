@@ -74,13 +74,13 @@ summary:focus-visible {
 .journey-intro {
   --journey-exit: 0;
   position: relative;
-  height: 190svh;
+  min-height: 100svh;
   background: transparent;
 }
 .journey-intro .hero {
-  position: sticky;
-  top: 0;
-  height: 100svh;
+  position: relative;
+  min-height: 100svh;
+  height: auto;
 }
 .growth-journey-canvas {
   position: fixed;
