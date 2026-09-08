@@ -2,17 +2,11 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const cursorEl = ref(null)
-const entranceEl = ref(null)
-const entranceCanvas = ref(null)
+const introEl = ref(null)
 const headerEl = ref(null)
 const heroDataCanvas = ref(null)
 let cleanupHeroData
-let cleanupEntrance
 let cleanupCursor
-const proofCanvas = ref(null)
-let cleanupProofScene
-const roleCanvas = ref(null)
-let cleanupRoleScene
 const proofSection = ref(null)
 let cleanupHorizontalProof
 let cleanupSmoothScroll
@@ -103,13 +97,10 @@ onMounted(async () => {
   serviceSteps.value.forEach((step) => serviceObserver.observe(step))
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (entranceEl.value && entranceCanvas.value && headerEl.value) {
-    const { initEntrance } = await import('./entranceScene')
-    cleanupEntrance = initEntrance(entranceEl.value, entranceCanvas.value, headerEl.value, reducedMotion || window.matchMedia('(max-width: 760px)').matches)
-  }
-  if (heroDataCanvas.value) {
+  if (heroDataCanvas.value && introEl.value && headerEl.value) {
     const { initHeroDataScene } = await import('./heroDataScene')
-    cleanupHeroData = initHeroDataScene(heroDataCanvas.value, !reducedMotion)
+    const journeySections = [...document.querySelectorAll('[data-journey-scene]')]
+    cleanupHeroData = initHeroDataScene(heroDataCanvas.value, headerEl.value, journeySections, { animate: !reducedMotion })
   }
   if (!reducedMotion) {
     const { initSmoothScroll } = await import('./smoothScroll')
@@ -119,14 +110,6 @@ onMounted(async () => {
     const { initCustomCursor } = await import('./customCursor')
     cleanupCursor = initCustomCursor(cursorEl.value)
   }
-  if (proofCanvas.value) {
-    const { initGrowthScene } = await import('./heroScene')
-    cleanupProofScene = initGrowthScene(proofCanvas.value, !reducedMotion)
-  }
-  if (roleCanvas.value) {
-    const { initRoleScene } = await import('./roleScene')
-    cleanupRoleScene = initRoleScene(roleCanvas.value, !reducedMotion)
-  }
   if (proofSection.value) {
     const { initHorizontalProof } = await import('./horizontalProof')
     cleanupHorizontalProof = initHorizontalProof(proofSection.value)
@@ -134,11 +117,8 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  cleanupEntrance?.()
   cleanupHeroData?.()
   cleanupCursor?.()
-  cleanupProofScene?.()
-  cleanupRoleScene?.()
   cleanupHorizontalProof?.()
   cleanupSmoothScroll?.()
   serviceObserver?.disconnect()
@@ -170,11 +150,10 @@ onBeforeUnmount(() => {
     </header>
 
     <main id="main">
-      <div ref="entranceEl" class="entrance">
-        <div class="entrance-sticky">
-          <section id="top" class="hero hero-light" aria-labelledby="hero-title">
-            <canvas ref="heroDataCanvas" class="hero-data-flow" aria-hidden="true"></canvas>
-        <div class="hero-content reveal">
+      <canvas ref="heroDataCanvas" class="growth-journey-canvas" aria-hidden="true"></canvas>
+      <div ref="introEl" class="journey-intro" data-journey-scene>
+        <section id="top" class="hero hero-light" aria-labelledby="hero-title">
+          <div class="hero-content reveal">
           <h1 id="hero-title">
             <span class="hero-line-primary" data-text="Strategy">Strategy</span>
             <span class="hero-line-accent" data-text="to revenue.">to revenue.</span>
@@ -195,17 +174,11 @@ onBeforeUnmount(() => {
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v13M5 11l5 5 5-5" /></svg>
         </a>
         <p class="scroll-note">Strategy · Systems · Execution</p>
-          </section>
-          <div class="entrance-gate" aria-hidden="true">
-            <canvas ref="entranceCanvas" class="entrance-canvas"></canvas>
-            <p class="entrance-prompt">Scroll to open</p>
-          </div>
-        </div>
+        </section>
       </div>
 
-      <section id="portfolio" ref="proofSection" class="proof-section dark-section" aria-labelledby="proof-title">
+      <section id="portfolio" ref="proofSection" class="proof-section dark-section" data-journey-scene aria-labelledby="proof-title">
         <div class="proof-sticky">
-          <canvas ref="proofCanvas" class="section-background-canvas" aria-hidden="true"></canvas>
           <div class="proof-header">
             <div class="section-label"><span>02</span> Portfolio</div>
             <div class="section-heading">
@@ -236,7 +209,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <section class="fractional-role-section" aria-labelledby="fractional-role-title">
+      <section class="fractional-role-section" data-journey-scene aria-labelledby="fractional-role-title">
         <div class="section-label"><span>03</span> Inside the role</div>
         <div class="fractional-role-layout">
           <div class="fractional-role-heading">
@@ -244,7 +217,6 @@ onBeforeUnmount(() => {
             <p>Senior ownership without adding another full-time executive layer.</p>
           </div>
           <div class="fractional-role-stage">
-            <canvas ref="roleCanvas" class="role-canvas" aria-hidden="true"></canvas>
             <div class="fractional-role-grid">
               <article>
                 <span>01</span>
@@ -266,7 +238,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <section id="services" class="services-section dark-section" aria-labelledby="services-title" @pointermove="handleServicePointer" @pointerleave="resetServicePointer">
+      <section id="services" class="services-section dark-section" data-journey-scene aria-labelledby="services-title" @pointermove="handleServicePointer" @pointerleave="resetServicePointer">
         <div class="section-label"><span>04</span> Fractional growth leadership</div>
         <div class="service-story">
           <div class="service-visual-wrap">
@@ -302,7 +274,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <section id="approach" class="approach-section" aria-labelledby="approach-title">
+      <section id="approach" class="approach-section" data-journey-scene aria-labelledby="approach-title">
         <div class="section-label"><span>05</span> Best fit</div>
         <div class="approach-grid">
           <div>
@@ -318,7 +290,7 @@ onBeforeUnmount(() => {
       </section>
 
 
-      <section id="booking" class="cta-section" aria-labelledby="cta-title">
+      <section id="booking" class="cta-section" data-journey-scene aria-labelledby="cta-title">
         <div class="cta-noise"></div>
         <p class="eyebrow">Ready when you are</p>
         <h2 id="cta-title">Are you <br /><span>ready to grow?</span></h2>

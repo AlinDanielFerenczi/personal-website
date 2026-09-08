@@ -1,20 +1,23 @@
 const COLORS = ['#e12afb', '#00d1ff', '#2b7fff', '#00c951']
-const CYCLE = 15100
 const ease = (value) => value * value * (3 - 2 * value)
-const converge = (value) => value ** 3
-const burst = (value) => value === 1 ? 1 : 1 - 2 ** (-10 * value)
 const hash = (value) => Math.abs(Math.sin(value * 12.9898) * 43758.5453) % 1
 const mix = (from, to, amount) => from + (to - from) * amount
+const clamp = (value) => Math.min(1, Math.max(0, value))
 
-export function getDataPhase(elapsed) {
-  const time = ((elapsed % CYCLE) + CYCLE) % CYCLE
-  if (time < 2400) return { name: 'cluster', amount: 0 }
-  if (time < 5000) return { name: 'forming', amount: ease((time - 2400) / 2600) }
-  if (time < 7200) return { name: 'structure', amount: 1 }
-  if (time < 9700) return { name: 'collapse', amount: converge((time - 7200) / 2500) }
-  if (time < 10700) return { name: 'singularity', amount: 1 }
-  if (time < 11600) return { name: 'explode', amount: burst((time - 10700) / 900) }
-  return { name: 'reset', amount: ease((time - 11600) / 3500) }
+export function getJourneyState(scrollY, sectionTops, viewportHeight) {
+  if (sectionTops.length < 2) return { scene: 0, next: 0, local: 0, transition: 0 }
+  for (let scene = 0; scene < sectionTops.length - 1; scene += 1) {
+    const boundary = sectionTops[scene + 1]
+    const start = scene === 0 ? 0 : boundary - viewportHeight
+    const end = scene === 0 ? Math.max(1, boundary - viewportHeight) : boundary
+    if (scrollY < start) return { scene, next: scene, local: 0, transition: 0 }
+    if (scrollY <= end) {
+      const local = clamp((scrollY - start) / Math.max(1, end - start))
+      return { scene, next: scene + 1, local, transition: ease(local) }
+    }
+  }
+  const scene = sectionTops.length - 1
+  return { scene, next: scene, local: 0, transition: 0 }
 }
 
 export function getFunnelPoint(index) {
@@ -35,165 +38,212 @@ export function getTrunkPoint(index) {
   }
 }
 
-function createParticles(count = 280) {
+function createParticles(count = 240) {
   return Array.from({ length: count }, (_, index) => {
     const cluster = index % 4
-    const clusterX = 0.08 + cluster * 0.085 + (hash(index + 3) - 0.5) * 0.1
-    const clusterY = [0.27, 0.44, 0.64, 0.78][cluster] + (hash(index + 11) - 0.5) * 0.16
     let targetX
     let targetY
-
     if (index < 80) {
-      const funnel = getFunnelPoint(index)
-      targetX = funnel.x
-      targetY = funnel.y
+      const point = getFunnelPoint(index)
+      targetX = point.x
+      targetY = point.y
     } else if (index < 112) {
-      const trunk = getTrunkPoint(index)
-      targetX = trunk.x
-      targetY = trunk.y
+      const point = getTrunkPoint(index)
+      targetX = point.x
+      targetY = point.y
     } else {
       const branch = (index - 112) % 6
-      const progress = Math.floor((index - 112) / 6) / 27
-      const ends = [
-        [0.88, 0.17], [0.96, 0.29], [0.9, 0.42],
-        [0.94, 0.57], [0.9, 0.7], [0.84, 0.82],
-      ]
-      targetX = mix(0.7, ends[branch][0], progress)
-      targetY = mix(0.5, ends[branch][1], progress) + Math.sin(progress * Math.PI) * (branch < 3 ? -0.035 : 0.035)
+      const progress = Math.floor((index - 112) / 6) / 21
+      const ends = [[.88, .17], [.96, .29], [.9, .42], [.95, .57], [.9, .7], [.84, .82]]
+      targetX = mix(.7, ends[branch][0], progress)
+      targetY = mix(.5, ends[branch][1], progress)
     }
-
-    const angle = hash(index + 47) * Math.PI * 2
-    const force = 0.45 + hash(index + 71) * 0.75
     return {
-      clusterX,
-      clusterY,
+      startX: .08 + cluster * .085 + (hash(index + 3) - .5) * .1,
+      startY: [.27, .44, .64, .78][cluster] + (hash(index + 11) - .5) * .16,
       targetX,
       targetY,
-      explodeX: 0.72 + Math.cos(angle) * force,
-      explodeY: 0.5 + Math.sin(angle) * force,
-      drift: hash(index + 91) * Math.PI * 2,
-      size: 1.1 + hash(index + 101) * 2.2,
+      burstAngle: hash(index + 47) * Math.PI * 2,
+      burstForce: .38 + hash(index + 71) * .72,
+      size: 2 + hash(index + 101) * 3.2,
       color: COLORS[index % COLORS.length],
     }
   })
 }
 
-function positionParticle(particle, phase, elapsed) {
-  const pulse = elapsed * 0.001
-  const clusterX = particle.clusterX + Math.sin(pulse * 1.7 + particle.drift) * 0.018
-  const clusterY = particle.clusterY + Math.cos(pulse * 1.3 + particle.drift) * 0.025
-
-  if (phase.name === 'cluster') return [clusterX, clusterY]
-  if (phase.name === 'forming') return [mix(clusterX, particle.targetX, phase.amount), mix(clusterY, particle.targetY, phase.amount)]
-  if (phase.name === 'structure') return [particle.targetX, particle.targetY]
-  if (phase.name === 'collapse') return [mix(particle.targetX, 0.72, phase.amount), mix(particle.targetY, 0.5, phase.amount)]
-  if (phase.name === 'singularity') return [0.72, 0.5]
-  if (phase.name === 'explode') return [mix(0.72, particle.explodeX, phase.amount), mix(0.5, particle.explodeY, phase.amount)]
-  return [mix(particle.explodeX, clusterX, phase.amount), mix(particle.explodeY, clusterY, phase.amount)]
+function dot(context, x, y, size, color, alpha) {
+  context.globalAlpha = alpha
+  context.fillStyle = color
+  context.shadowColor = color
+  context.shadowBlur = 7
+  context.beginPath()
+  context.arc(x, y, size, 0, Math.PI * 2)
+  context.fill()
 }
 
-function drawStructure(context, width, height, strength) {
-  if (strength < 0.05) return
-  const gradient = context.createLinearGradient(width * 0.38, 0, width * 0.96, 0)
-  gradient.addColorStop(0, '#e12afb')
-  gradient.addColorStop(0.52, '#2b7fff')
-  gradient.addColorStop(1, '#00d1ff')
-  context.save()
-  context.globalAlpha = strength * 0.28
-  context.strokeStyle = gradient
-  context.lineWidth = 1.15
+function line(context, points, color, alpha, width = 1) {
+  context.globalAlpha = alpha
+  context.strokeStyle = color
+  context.shadowColor = color
+  context.shadowBlur = 7
+  context.lineWidth = width
   context.lineCap = 'round'
-  context.shadowColor = '#2b7fff'
-  context.shadowBlur = 9
-  const path = (points) => {
-    context.beginPath()
-    context.moveTo(points[0][0] * width, points[0][1] * height)
-    points.slice(1).forEach(([x, y]) => context.lineTo(x * width, y * height))
-    context.stroke()
-  }
-  path([[.36, .16], [.455, .28], [.527, .41], [.55, .5]])
-  path([[.74, .16], [.645, .28], [.573, .41], [.55, .5]])
-  path([[.55, .5], [.62, .5], [.7, .5]])
-  ;[[.89, .17], [.96, .29], [.91, .42], [.95, .57], [.9, .7], [.84, .82]].forEach((end, index) => {
-    path([[.7, .5], [.76, .47 + (index - 2.5) * .015], end])
-  })
-  context.restore()
+  context.beginPath()
+  points.forEach(([x, y], index) => index ? context.lineTo(x, y) : context.moveTo(x, y))
+  context.stroke()
 }
 
-export function initHeroDataScene(canvas, animate = true) {
+function collapsedPosition(particle, index, elapsed) {
+  const angle = particle.burstAngle + elapsed * .00008
+  const radius = .008 + hash(index + 19) * .026
+  return [.62 + Math.cos(angle) * radius, .5 + Math.sin(angle) * radius]
+}
+
+function explodedPosition(particle) {
+  return [
+    particle.startX + Math.cos(particle.burstAngle) * particle.burstForce,
+    particle.startY + Math.sin(particle.burstAngle) * particle.burstForce,
+  ]
+}
+
+function leftClusterPosition(particle) {
+  return [
+    .14 + (particle.startX - .2) * .62,
+    .5 + (particle.startY - .5) * .48,
+  ]
+}
+
+function streamPoint(progress, lane, width, height) {
+  const y = .2 + lane * .2 + Math.sin(progress * Math.PI * 2 + lane) * .055
+  return [progress * width, y * height]
+}
+
+function orbitPosition(particle, index, width, height, elapsed) {
+  const ring = index % 4
+  const radius = 190 + ring * 95 + hash(index + 12) * 55
+  const angle = particle.burstAngle + elapsed * .00014 * (ring % 2 ? -1 : 1)
+  const tilt = -.28
+  const x = Math.cos(angle) * radius
+  const y = Math.sin(angle) * radius * .32
+  return [
+    .5 + (x * Math.cos(tilt) - y * Math.sin(tilt)) / width,
+    .32 + (x * Math.sin(tilt) + y * Math.cos(tilt)) / height,
+  ]
+}
+
+function scenePosition(scene, particle, index, count, width, height, elapsed) {
+  if (scene === 0) return collapsedPosition(particle, index, elapsed)
+  if (scene === 1) return explodedPosition(particle)
+  if (scene === 2) return leftClusterPosition(particle)
+  if (scene === 3) return [particle.targetX, particle.targetY]
+  if (scene === 4) {
+    const lane = index % 4
+    const progress = (index / count + elapsed * .00009 + lane * .11) % 1
+    const [x, y] = streamPoint(progress, lane, width, height)
+    return [x / width, y / height]
+  }
+  return orbitPosition(particle, index, width, height, elapsed)
+}
+
+function drawGuides(context, scene, width, height, particles, alpha) {
+  if (scene === 0) {
+    dot(context, width * .62, height * .5, 7, '#e12afb', alpha * .9)
+  }
+  if (scene === 3) {
+    for (let index = 0; index < particles.length; index += 12) {
+      const particle = particles[index]
+      line(context, [[.7 * width, .5 * height], [particle.targetX * width, particle.targetY * height]], particle.color, alpha * .2)
+    }
+  }
+  if (scene === 4) {
+    COLORS.forEach((color, lane) => {
+      const points = Array.from({ length: 52 }, (_, index) => streamPoint(index / 51, lane, width, height))
+      line(context, points, color, alpha * .48, 1.5)
+    })
+  }
+  if (scene === 5) {
+    ;[190, 285, 380, 475].forEach((radius, index) => {
+      context.globalAlpha = alpha * (.5 - index * .06)
+      context.strokeStyle = COLORS[index]
+      context.lineWidth = 1.5
+      context.beginPath()
+      context.ellipse(width * .5, height * .32, radius, radius * .32, -.28, 0, Math.PI * 2)
+      context.stroke()
+    })
+  }
+}
+
+function drawJourney(context, state, width, height, particles, elapsed) {
+  const amount = state.scene === 0 ? 1 - (1 - state.transition) ** 2.4 : state.transition
+  drawGuides(context, state.scene, width, height, particles, 1 - amount)
+  if (state.next !== state.scene) drawGuides(context, state.next, width, height, particles, amount)
+
+  particles.forEach((particle, index) => {
+    const from = scenePosition(state.scene, particle, index, particles.length, width, height, elapsed)
+    const to = scenePosition(state.next, particle, index, particles.length, width, height, elapsed)
+    const x = mix(from[0], to[0], amount) * width
+    const y = mix(from[1], to[1], amount) * height
+    const transitionBoost = Math.sin(amount * Math.PI) * 2
+    dot(context, x, y, particle.size + transitionBoost, particle.color, .96)
+  })
+}
+
+export function initHeroDataScene(canvas, header, sections, options = {}) {
+  const animate = options.animate ?? true
   const context = canvas.getContext('2d')
   const particles = createParticles()
   let width = 0
   let height = 0
   let frame
-  let visible = true
   const start = performance.now()
+
+  header.style.animation = 'none'
+  const draw = (elapsed) => {
+    if (!width || !height) return
+    const sectionTops = sections.map((section) => section.offsetTop)
+    const state = animate ? getJourneyState(window.scrollY, sectionTops, height) : { scene: 0, next: 0, local: 0, transition: 0 }
+    const intro = sections[0]
+    const exit = state.scene === 0 ? ease(clamp((state.local - .68) / .32)) : 1
+    const scrollFade = state.scene === 0 ? ease(clamp(state.local / .75)) : 1
+    intro.style.setProperty('--journey-exit', exit)
+    intro.style.setProperty('--scroll-fade', scrollFade)
+    intro.style.setProperty('--journey-shift', `${-exit * 32}px`)
+
+    const proofStart = sectionTops[1] || height
+    const retreat = animate ? clamp((window.scrollY - proofStart - 160) / 280) : 0
+    header.style.transform = `translate(-50%, ${-125 * retreat}%)`
+    header.style.opacity = String(1 - retreat)
+
+    context.clearRect(0, 0, width, height)
+    drawJourney(context, state, width, height, particles, elapsed)
+  }
 
   const resize = () => {
     const ratio = Math.min(window.devicePixelRatio, 1.5)
-    width = canvas.clientWidth
-    height = canvas.clientHeight
+    width = window.innerWidth
+    height = window.innerHeight
     canvas.width = Math.round(width * ratio)
     canvas.height = Math.round(height * ratio)
     context.setTransform(ratio, 0, 0, ratio, 0, 0)
-    draw(animate ? performance.now() - start : 6000)
-  }
-
-  const draw = (elapsed) => {
-    if (!width || !height) return
-    const phase = getDataPhase(elapsed)
-    const positions = particles.map((particle) => positionParticle(particle, phase, elapsed))
-    const structureStrength = phase.name === 'forming' ? phase.amount : phase.name === 'structure' ? 1 : phase.name === 'collapse' ? 1 - phase.amount : 0
-
-    context.clearRect(0, 0, width, height)
-    context.save()
-    drawStructure(context, width, height, structureStrength)
-    context.globalCompositeOperation = 'multiply'
-    if (structureStrength > 0.08) {
-      context.globalAlpha = structureStrength * 0.12
-      context.lineWidth = 0.7
-      for (let index = 1; index < positions.length; index += 1) {
-        const [x, y] = positions[index]
-        const [previousX, previousY] = positions[index - 1]
-        if (Math.hypot(x - previousX, y - previousY) > 0.09) continue
-        context.strokeStyle = particles[index].color
-        context.beginPath()
-        context.moveTo(previousX * width, previousY * height)
-        context.lineTo(x * width, y * height)
-        context.stroke()
-      }
-    }
-
-    context.globalCompositeOperation = 'source-over'
-    positions.forEach(([x, y], index) => {
-      const particle = particles[index]
-      const explosionBoost = phase.name === 'explode' ? Math.sin(phase.amount * Math.PI) * 2.2 : 0
-      context.globalAlpha = 0.58 + explosionBoost * 0.1
-      context.fillStyle = particle.color
-      context.shadowColor = particle.color
-      context.shadowBlur = 7 + explosionBoost * 5
-      context.beginPath()
-      context.arc(x * width, y * height, particle.size + explosionBoost, 0, Math.PI * 2)
-      context.fill()
-    })
-    context.restore()
+    draw(animate ? performance.now() - start : 0)
   }
 
   const render = (now) => {
-    if (visible) draw(now - start)
+    draw(now - start)
     frame = requestAnimationFrame(render)
   }
 
-  const resizeObserver = new ResizeObserver(resize)
-  const visibilityObserver = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting })
-  resizeObserver.observe(canvas)
-  visibilityObserver.observe(canvas)
+  const observer = new ResizeObserver(resize)
+  observer.observe(document.documentElement)
   resize()
   if (animate) frame = requestAnimationFrame(render)
 
   return () => {
     cancelAnimationFrame(frame)
-    resizeObserver.disconnect()
-    visibilityObserver.disconnect()
+    observer.disconnect()
+    sections[0].style.removeProperty('--journey-exit')
+    sections[0].style.removeProperty('--scroll-fade')
+    sections[0].style.removeProperty('--journey-shift')
+    header.removeAttribute('style')
   }
 }
