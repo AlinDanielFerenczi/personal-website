@@ -99,6 +99,15 @@ function collapsedPosition(particle, index, elapsed) {
   return [.62 + Math.cos(angle) * radius, .5 + Math.sin(angle) * radius]
 }
 
+function rainPosition(particle, index, elapsed) {
+  const destination = collapsedPosition(particle, index, elapsed)
+  const delay = hash(index + 137) * 650
+  const amount = ease(clamp((elapsed - delay) / 1000))
+  const startX = .62 + (hash(index + 149) - .5) * .035
+  const startY = -.08 - hash(index + 163) * .25
+  return [mix(startX, destination[0], amount), mix(startY, destination[1], amount)]
+}
+
 function explodedPosition(particle) {
   return [
     particle.startX + Math.cos(particle.burstAngle) * particle.burstForce,
@@ -132,7 +141,7 @@ function orbitPosition(particle, index, width, height, elapsed) {
 }
 
 function scenePosition(scene, particle, index, count, width, height, elapsed) {
-  if (scene === 0) return collapsedPosition(particle, index, elapsed)
+  if (scene === 0) return rainPosition(particle, index, elapsed)
   if (scene === 1) return explodedPosition(particle)
   if (scene === 2) return leftClusterPosition(particle)
   if (scene === 3) return [particle.targetX, particle.targetY]
@@ -225,7 +234,7 @@ export function initHeroDataScene(canvas, header, sections, options = {}) {
     canvas.width = Math.round(width * ratio)
     canvas.height = Math.round(height * ratio)
     context.setTransform(ratio, 0, 0, ratio, 0, 0)
-    draw(animate ? performance.now() - start : 0)
+    draw(animate ? performance.now() - start : 2000)
   }
 
   const render = (now) => {
