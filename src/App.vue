@@ -11,13 +11,10 @@ const proofSection = ref(null)
 let cleanupHorizontalProof
 let cleanupSmoothScroll
 const activeService = ref(0)
-const serviceSteps = ref([])
+const servicesSection = ref(null)
 const serviceColors = ['#e12afb', '#00d1ff', '#2b7fff', '#00c951']
-let serviceObserver
+let cleanupServiceScroll
 
-function trackServiceStep(element, index) {
-  if (element) serviceSteps.value[index] = element
-}
 
 function handleServicePointer(event) {
   const bounds = event.currentTarget.getBoundingClientRect()
@@ -88,14 +85,27 @@ const services = [
 ]
 
 onMounted(async () => {
-  serviceObserver = new IntersectionObserver(
-    (entries) => entries.forEach((entry) => {
-      if (entry.isIntersecting) activeService.value = Number(entry.target.dataset.index)
-    }),
-    { rootMargin: '-32% 0px -48%', threshold: 0.2 },
-  )
-  serviceSteps.value.forEach((step) => serviceObserver.observe(step))
-
+  if (servicesSection.value) {
+    let frame
+    const updateService = () => {
+      frame = undefined
+      const section = servicesSection.value
+      const distance = Math.max(1, section.offsetHeight - window.innerHeight)
+      const progress = Math.min(1, Math.max(0, -section.getBoundingClientRect().top / distance))
+      activeService.value = Math.min(services.length - 1, Math.floor(progress * services.length))
+    }
+    const requestServiceUpdate = () => {
+      if (!frame) frame = requestAnimationFrame(updateService)
+    }
+    window.addEventListener('scroll', requestServiceUpdate, { passive: true })
+    window.addEventListener('resize', requestServiceUpdate)
+    updateService()
+    cleanupServiceScroll = () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', requestServiceUpdate)
+      window.removeEventListener('resize', requestServiceUpdate)
+    }
+  }
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   if (heroDataCanvas.value && introEl.value && headerEl.value) {
     const { initHeroDataScene } = await import('./heroDataScene')
@@ -121,7 +131,7 @@ onBeforeUnmount(() => {
   cleanupCursor?.()
   cleanupHorizontalProof?.()
   cleanupSmoothScroll?.()
-  serviceObserver?.disconnect()
+  cleanupServiceScroll?.()
 })
 </script>
 
@@ -238,43 +248,31 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <section id="services" class="services-section dark-section" data-journey-scene aria-labelledby="services-title" @pointermove="handleServicePointer" @pointerleave="resetServicePointer">
-        <div class="section-label"><span>04</span> Fractional growth leadership</div>
-        <div class="service-story">
-          <div class="service-visual-wrap">
-            <h2 id="services-title">One owner.<br /><em>The whole engine.</em></h2>
-            <aside class="service-visual" :style="{ '--active-color': serviceColors[activeService] }" aria-hidden="true">
-              <div class="visual-grid"></div>
-              <div class="visual-orbit orbit-large"></div>
-              <div class="visual-orbit orbit-small"></div>
-              <div class="visual-core"><span></span></div>
-              <div class="visual-copy">
-                <span>Growth system</span>
-                <strong>{{ services[activeService].number }}</strong>
-                <p>{{ services[activeService].title }}</p>
-              </div>
-            </aside>
-          </div>
-          <div class="service-list">
-            <article
-              v-for="(service, index) in services"
-              :key="service.number"
-              :ref="(element) => trackServiceStep(element, index)"
-              :data-index="index"
-              class="service-row"
-              :class="{ active: activeService === index }"
-            >
-              <span class="service-number">{{ service.number }}</span>
-              <div>
-                <h3>{{ service.title }}</h3>
-                <p>{{ service.copy }}</p>
-              </div>
-            </article>
+      <section ref="servicesSection" id="services" class="services-section dark-section" data-journey-scene aria-labelledby="services-title" @pointermove="handleServicePointer" @pointerleave="resetServicePointer">
+        <div class="services-sticky">
+          <div class="section-label"><span>04</span> Fractional growth leadership</div>
+          <div class="service-story">
+            <div class="service-visual-wrap">
+              <h2 id="services-title">One owner.<br /><em>The whole engine.</em></h2>
+              <aside class="service-copy-panel" :style="{ '--active-color': serviceColors[activeService] }">
+                <div class="visual-grid" aria-hidden="true"></div>
+                <div class="visual-orbit orbit-large" aria-hidden="true"></div>
+                <div class="visual-orbit orbit-small" aria-hidden="true"></div>
+                <div class="visual-core" aria-hidden="true"><span></span></div>
+                <div :key="activeService" class="service-copy-content">
+                  <span>Growth system</span>
+                  <strong>{{ services[activeService].number }}</strong>
+                  <h3>{{ services[activeService].title }}</h3>
+                  <p>{{ services[activeService].copy }}</p>
+                </div>
+              </aside>
+            </div>
           </div>
         </div>
       </section>
 
       <section id="approach" class="approach-section" data-journey-scene aria-labelledby="approach-title">
+        <div class="approach-visual-wrap">
         <div class="section-label"><span>05</span> Best fit</div>
         <div class="approach-grid">
           <div>
@@ -287,6 +285,7 @@ onBeforeUnmount(() => {
             <li><span>04</span><p>You care about long term results, not short hype.</p></li>
           </ul>
         </div>
+        </div>
       </section>
 
 
@@ -294,7 +293,6 @@ onBeforeUnmount(() => {
         <div class="cta-noise"></div>
         <p class="eyebrow">Ready when you are</p>
         <h2 id="cta-title">Are you <br /><span>ready to grow?</span></h2>
-        <p>Bring the numbers, the bottleneck, and the ambition. We will start there.</p>
         <div class="booking-frame">
           <iframe
             src="https://cal.com/alin-ferenczi/discovery-call?embed=true"

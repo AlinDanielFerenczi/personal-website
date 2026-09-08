@@ -93,17 +93,19 @@ function line(context, points, color, alpha, width = 1) {
   context.stroke()
 }
 
-function collapsedPosition(particle, index, elapsed) {
+function collapsedPosition(particle, index, elapsed, width) {
+  const centerX = width >= 1100 ? .88 : .62
   const angle = particle.burstAngle + elapsed * .00008
   const radius = .022 + hash(index + 19) * .06
-  return [.62 + Math.cos(angle) * radius, .5 + Math.sin(angle) * radius]
+  return [centerX + Math.cos(angle) * radius, .5 + Math.sin(angle) * radius]
 }
 
-function rainPosition(particle, index, elapsed) {
-  const destination = collapsedPosition(particle, index, elapsed)
+function rainPosition(particle, index, elapsed, width) {
+  const centerX = width >= 1100 ? .88 : .62
+  const destination = collapsedPosition(particle, index, elapsed, width)
   const delay = hash(index + 137) * 650
   const amount = ease(clamp((elapsed - delay) / 1000))
-  const startX = .62 + (hash(index + 149) - .5) * .035
+  const startX = centerX + (hash(index + 149) - .5) * .035
   const startY = -.08 - hash(index + 163) * .25
   return [mix(startX, destination[0], amount), mix(startY, destination[1], amount)]
 }
@@ -132,16 +134,18 @@ function orbitPosition(particle, index, width, height, elapsed) {
   const radius = 190 + ring * 95 + hash(index + 12) * 55
   const angle = particle.burstAngle + elapsed * .00014 * (ring % 2 ? -1 : 1)
   const tilt = -.28
+  const centerX = width >= 1100 ? .7 : .5
+  const centerY = width >= 1100 ? .62 : .35
   const x = Math.cos(angle) * radius
   const y = Math.sin(angle) * radius * .32
   return [
-    .5 + (x * Math.cos(tilt) - y * Math.sin(tilt)) / width,
-    .32 + (x * Math.sin(tilt) + y * Math.cos(tilt)) / height,
+    centerX + (x * Math.cos(tilt) - y * Math.sin(tilt)) / width,
+    centerY + (x * Math.sin(tilt) + y * Math.cos(tilt)) / height,
   ]
 }
 
 function scenePosition(scene, particle, index, count, width, height, elapsed) {
-  if (scene === 0) return rainPosition(particle, index, elapsed)
+  if (scene === 0) return rainPosition(particle, index, elapsed, width)
   if (scene === 1) return explodedPosition(particle)
   if (scene === 2) return leftClusterPosition(particle)
   if (scene === 3) return [particle.targetX, particle.targetY]
@@ -156,7 +160,7 @@ function scenePosition(scene, particle, index, count, width, height, elapsed) {
 
 function drawGuides(context, scene, width, height, particles, alpha) {
   if (scene === 0) {
-    dot(context, width * .62, height * .5, 7, '#e12afb', alpha * .9)
+    dot(context, width * (width >= 1100 ? .88 : .62), height * .5, 7, '#e12afb', alpha * .9)
   }
   if (scene === 3) {
     for (let index = 0; index < particles.length; index += 12) {
@@ -176,7 +180,7 @@ function drawGuides(context, scene, width, height, particles, alpha) {
       context.strokeStyle = COLORS[index]
       context.lineWidth = 1.5
       context.beginPath()
-      context.ellipse(width * .5, height * .32, radius, radius * .32, -.28, 0, Math.PI * 2)
+      context.ellipse(width * (width >= 1100 ? .7 : .5), height * (width >= 1100 ? .62 : .35), radius, radius * .32, -.28, 0, Math.PI * 2)
       context.stroke()
     })
   }
