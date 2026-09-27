@@ -72,13 +72,25 @@ function createParticles(count = 240) {
 }
 
 function dot(context, x, y, size, color, alpha) {
+  const gradient = context.createRadialGradient(
+    x - size * .35, y - size * .4, size * .08,
+    x, y, size * 1.15,
+  )
+  gradient.addColorStop(0, '#fff')
+  gradient.addColorStop(.18, color)
+  gradient.addColorStop(.7, color)
+  gradient.addColorStop(1, '#020617')
+
   context.globalAlpha = alpha
-  context.fillStyle = color
+  context.fillStyle = gradient
+  context.strokeStyle = 'rgba(255,255,255,.35)'
+  context.lineWidth = Math.max(.5, size * .12)
   context.shadowColor = color
-  context.shadowBlur = 7
+  context.shadowBlur = size * 2
   context.beginPath()
   context.arc(x, y, size, 0, Math.PI * 2)
   context.fill()
+  context.stroke()
 }
 
 function line(context, points, color, alpha, width = 1) {
