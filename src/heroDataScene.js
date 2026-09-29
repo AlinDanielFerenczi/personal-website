@@ -209,14 +209,38 @@ function drawJourney(context, state, width, height, particles, elapsed) {
   drawGuides(context, state.scene, width, height, particles, 1 - amount)
   if (state.next !== state.scene) drawGuides(context, state.next, width, height, particles, amount)
 
+  const colorPaths = COLORS.map(() => new Path2D())
+  const glowPaths = COLORS.map(() => new Path2D())
+  const highlights = new Path2D()
+
   particles.forEach((particle, index) => {
     const from = scenePosition(state.scene, particle, index, particles.length, width, height, elapsed)
     const to = scenePosition(state.next, particle, index, particles.length, width, height, elapsed)
     const x = mix(from[0], to[0], amount) * width
     const y = mix(from[1], to[1], amount) * height
-    const transitionBoost = Math.sin(amount * Math.PI) * 2
-    dot(context, x, y, particle.size + transitionBoost, particle.color, .96)
+    const size = particle.size + Math.sin(amount * Math.PI) * 2
+    const path = colorPaths[index % COLORS.length]
+    const glow = glowPaths[index % COLORS.length]
+    path.moveTo(x + size, y)
+    path.arc(x, y, size, 0, Math.PI * 2)
+    glow.moveTo(x + size * 1.8, y)
+    glow.arc(x, y, size * 1.8, 0, Math.PI * 2)
+    highlights.moveTo(x + size * .2, y - size * .2)
+    highlights.arc(x, y - size * .2, size * .2, 0, Math.PI * 2)
   })
+
+  context.shadowBlur = 0
+  COLORS.forEach((color, index) => {
+    context.fillStyle = color
+    context.globalAlpha = .16
+    context.fill(glowPaths[index])
+    context.globalAlpha = .96
+    context.fill(colorPaths[index])
+  })
+  context.globalAlpha = .7
+  context.shadowBlur = 0
+  context.fillStyle = '#fff'
+  context.fill(highlights)
 }
 
 export function initHeroDataScene(canvas, header, sections, options = {}) {
@@ -250,7 +274,7 @@ export function initHeroDataScene(canvas, header, sections, options = {}) {
   }
 
   const resize = () => {
-    const ratio = Math.min(window.devicePixelRatio, 1.5)
+    const ratio = Math.min(window.devicePixelRatio, 1.25)
     width = window.innerWidth
     height = window.innerHeight
     canvas.width = Math.round(width * ratio)

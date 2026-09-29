@@ -192,15 +192,13 @@ onBeforeUnmount(() => {
           <div class="proof-header">
             <div class="section-label"><span>02</span> Portfolio</div>
             <div class="section-heading">
-              <h2 id="proof-title">I walk the <em>talk.</em></h2>
-              <p>Four projects. One outcome at a time.</p>
+              <h2 id="proof-title">My results</h2>
             </div>
           </div>
           <div class="proof-viewport">
             <div class="proof-track">
-              <article v-for="(item, index) in achievements" :key="item.metric" class="proof-slide" :class="`accent-${item.color}`">
+              <article v-for="item in achievements" :key="item.metric" class="proof-slide" :class="`accent-${item.color}`">
                 <div class="proof-slide-copy">
-                  <span class="proof-index">{{ String(index + 1).padStart(2, '0') }} / {{ String(achievements.length).padStart(2, '0') }}</span>
                   <strong>{{ item.metric }}</strong>
                   <h3>{{ item.label }}</h3>
                   <p>{{ item.detail }}</p>
@@ -223,7 +221,7 @@ onBeforeUnmount(() => {
         <div class="section-label"><span>03</span> Inside the role</div>
         <div class="fractional-role-layout">
           <div class="fractional-role-heading">
-            <h2 id="fractional-role-title">What a fractional growth lead <em>actually does.</em></h2>
+            <h2 id="fractional-role-title">What's a fractional growth lead</h2>
             <p>Senior ownership without adding another full-time executive layer.</p>
           </div>
           <div class="fractional-role-stage">
@@ -253,7 +251,7 @@ onBeforeUnmount(() => {
           <div class="section-label"><span>04</span> Fractional growth leadership</div>
           <div class="service-story">
             <div class="service-visual-wrap">
-              <h2 id="services-title">One owner.<br /><em>The whole engine.</em></h2>
+              <h2 id="services-title">Building a growth engine</h2>
               <aside class="service-copy-panel" :style="{ '--active-color': serviceColors[activeService] }">
                 <div class="visual-grid" aria-hidden="true"></div>
                 <div class="visual-orbit orbit-large" aria-hidden="true"></div>
@@ -276,13 +274,13 @@ onBeforeUnmount(() => {
         <div class="section-label"><span>05</span> Best fit</div>
         <div class="approach-grid">
           <div>
-            <h2 id="approach-title">Are you a founder<br />ready to <em>move?</em></h2>
+            <h2 id="approach-title">Are we a good fit?</h2>
           </div>
           <ul class="fit-list">
-            <li><span>01</span><p>You have product and early traction, but growth is inconsistent.</p></li>
-            <li><span>02</span><p>Marketing, sales, product, and operations are pulling in different directions.</p></li>
-            <li><span>03</span><p>You need a close partner, not another hire.</p></li>
-            <li><span>04</span><p>You care about long term results, not short hype.</p></li>
+            <li><p>You have product and early traction, but growth is inconsistent.</p></li>
+            <li><p>Marketing, sales, and ops are pulling in different directions.</p></li>
+            <li><p>You need a close partner, not another hire.</p></li>
+            <li><p>You care about long term results, not short hype.</p></li>
           </ul>
         </div>
         </div>
